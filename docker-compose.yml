@@ -1,0 +1,20 @@
+services:
+  app-websocket:
+    build: ./
+    ports:
+      - 8000:8000
+    depends_on:
+      websocket-db:
+        condition: service_healthy
+    environment:
+      - DB_PASSWORD=qwerty
+
+  websocket-db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=qwerty
+    ports:
+      - 5436:5432
