@@ -7,6 +7,8 @@ import (
 	"web-socket-postgres-auth-messager/repository"
 	"web-socket-postgres-auth-messager/service"
 
+	_ "github.com/lib/pq" // драйвер для Postgres
+
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -18,7 +20,7 @@ func main() {
 	}
 
 	if err := godotenv.Load(); err != nil {
-		logrus.Fatalf("load env err: %v", err.Error())
+		logrus.Warnf("load env warn: %v", err.Error())
 	}
 
 	db, err := repository.NewPostgresDB(repository.Config{
@@ -49,6 +51,12 @@ func main() {
 
 func initConfig() error {
 	viper.AddConfigPath("configs")
-	viper.SetConfigName("config")
+
+	configName := os.Getenv("CONFIG_NAME")
+	if configName == "" {
+		configName = "config"
+	}
+
+	viper.SetConfigName(configName)
 	return viper.ReadInConfig()
 }

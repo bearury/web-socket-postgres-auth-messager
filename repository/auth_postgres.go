@@ -18,7 +18,7 @@ func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 func (repo *AuthPostgres) GetUser(username, password string) (entities.User, error) {
 	var user entities.User
 
-	query := fmt.Sprintf("SELECT id FROM %s WHERE username=$1 AND password = $2", usersTable)
+	query := fmt.Sprintf("SELECT id FROM %s WHERE username=$1 AND password_hash = $2", usersTable)
 
 	err := repo.db.Get(&user, query, username, password)
 

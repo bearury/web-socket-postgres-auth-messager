@@ -1,0 +1,8 @@
+PORT: "8000"
+
+db:
+  HOST: "websocket-db"
+  PORT: "5432"
+  USERNAME: "postgres"
+  DATABASE: "postgres"
+  SSLMODE: "disable"

@@ -1,21 +1,9 @@
 services:
-  app-websocket:
-    build: ./
-    ports:
-      - ${APP_PORT:-8000}:8000
-    depends_on:
-      websocket-db:
-        condition: service_healthy
-    environment:
-      - DB_PASSWORD=qwerty
-      - CONFIG_NAME=config.docker
-
   websocket-db:
     restart: always
     image: postgres:latest
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./schema/000001_init.up.sql:/docker-entrypoint-initdb.d/001-init.sql
     environment:
       - POSTGRES_PASSWORD=qwerty
     ports:
