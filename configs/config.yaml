@@ -2,7 +2,7 @@ PORT: "8080"
 
 db: {
   HOST: "localhost",
-  PORT: "5432",
+  PORT: "5436",
   USERNAME: "postgres",
   DATABASE: "postgres",
   SSLMODE: "disable"

@@ -9,6 +9,7 @@ import (
 type AuthRepository interface {
 	CreateUser(user entities.User) (string, error)
 	GetUser(username string, password string) (entities.User, error)
+	GetUserById(userId string) (entities.UserResponse, error)
 }
 
 type Repository struct {
