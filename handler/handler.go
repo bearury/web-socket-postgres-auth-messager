@@ -31,6 +31,13 @@ func (handler *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", handler.signIn)
 	}
 
+	api := router.Group("/api", handler.userIdentity)
+	{
+		api.GET("/chat", handler.getChats)
+		api.POST("/chat", handler.addToChat)
+		api.DELETE("/chat", handler.removeChat)
+	}
+
 	router.GET("/ws", handler.ws)
 
 	return router

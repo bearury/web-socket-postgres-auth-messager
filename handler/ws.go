@@ -84,29 +84,7 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 				continue
 			}
 
-			logrus.Infof(
-				"User %d sent message: %s",
-				client.User,
-				content,
-			)
-
-			name := "Anonimus"
-
-			if client.User.Name != "" {
-				name = client.User.Name
-			} else if client.User.Username != "" {
-				name = client.User.Username
-			}
-
-			handler.hub.BroadcastExcept(client,
-				entities.MessageResponse{
-					Type: "message",
-					Payload: entities.PayloadMessageResponse{
-						From:    name,
-						To:      "all",
-						Content: content,
-					},
-				})
+			handler.sendAllMessage(client, content)
 
 		case "ping":
 			timestamp, ok := msg.Payload["timestamp"]
@@ -121,4 +99,24 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 			)
 		}
 	}
+}
+
+func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
+	name := "Anonimus"
+
+	if client.User.Name != "" {
+		name = client.User.Name
+	} else if client.User.Username != "" {
+		name = client.User.Username
+	}
+
+	handler.hub.BroadcastExcept(client,
+		entities.MessageResponse{
+			Type: "message",
+			Payload: entities.PayloadMessageResponse{
+				From:    name,
+				To:      "all",
+				Content: content,
+			},
+		})
 }

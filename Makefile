@@ -1,4 +1,5 @@
-
+create_migrate:
+	migrate create -ext sql -dir ./schema -seq create_chats
 
 migrate:
-	migrate -path ./schema -database 'postgres://postgres:qwerty@0.0.0.0:5436/postgres?sslmode=disable' up
+	migrate -path ./schema -database 'postgres://postgres:qwerty@localhost:5436/postgres?sslmode=disable' up
