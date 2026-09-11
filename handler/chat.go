@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -16,8 +18,13 @@ func (handler *Handler) getChats(c *gin.Context) {
 		logrus.Error(err)
 	}
 
-	logrus.Infof("getChats: %v", userId)
+	chats, err := handler.services.Chat.GetChats(userId)
 
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+	}
+
+	c.JSON(http.StatusOK, chats)
 }
 
 func (handler *Handler) removeChat(c *gin.Context) {

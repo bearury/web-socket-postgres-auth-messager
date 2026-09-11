@@ -12,12 +12,18 @@ type AuthRepository interface {
 	GetUserById(userId string) (entities.UserResponse, error)
 }
 
+type ChatRepository interface {
+	GetChats(userId string) ([]entities.Chat, error)
+}
+
 type Repository struct {
 	AuthRepository
+	ChatRepository
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		AuthRepository: NewAuthPostgres(db),
+		ChatRepository: NewChatPostgres(db),
 	}
 }

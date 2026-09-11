@@ -42,7 +42,7 @@ func (repo *AuthPostgres) CreateUser(user entities.User) (string, error) {
 func (repo *AuthPostgres) GetUserById(userId string) (entities.UserResponse, error) {
 	var user entities.UserResponse
 
-	query := fmt.Sprintf("SELECT id, name, username FROM %s WHERE id=$1", usersTable)
+	query := fmt.Sprintf("SELECT id, name, username FROM %s WHERE id = $1", usersTable)
 
 	err := repo.db.Get(&user, query, userId)
 
