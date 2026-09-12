@@ -14,6 +14,7 @@ type Authorization interface {
 
 type Chat interface {
 	GetChats(userId string) ([]entities.Chat, error)
+	AddChat(name string, chatType entities.ChatType, userId string, userIds []string) (entities.Chat, error)
 }
 
 type Service struct {
@@ -24,6 +25,6 @@ type Service struct {
 func NewService(repo *repository.Repository) *Service {
 	return &Service{
 		Authorization: NewAuthService(repo.AuthRepository),
-		Chat:          NewChatService(repo.ChatRepository),
+		Chat:          NewChatService(repo.ChatRepository, repo.AuthRepository),
 	}
 }

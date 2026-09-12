@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 const (
@@ -58,12 +59,9 @@ func getParam(c *gin.Context) (string, error) {
 		return "", errors.New("Param id is empty")
 	}
 
-	// TODO надо подключить пакет UUID для валидации uuid
-	//if err := uuid.Validate(id); err == nil {
-	//	return id, nil
-	//} else {
-	//	return "", errors.New("Param id is not uuid")
-	//}
-
-	return id, nil
+	if err := uuid.Validate(id); err == nil {
+		return id, nil
+	} else {
+		return "", errors.New("Param id is not uuid")
+	}
 }
