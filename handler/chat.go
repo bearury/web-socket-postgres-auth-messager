@@ -21,8 +21,6 @@ func (handler *Handler) addToChat(c *gin.Context) {
 
 	var input dto.CreateChatRequest
 
-	logrus.Info("Запрос от юзера с ID: ", userId)
-
 	if err := c.BindJSON(&input); err != nil {
 		logrus.Errorf("Error binding JSON: %s, Handler: %s, Body: %s", err, c.Request.RequestURI, c.Request.Body)
 		newErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Неверные параметры запроса: %s", err.Error()))
@@ -33,9 +31,6 @@ func (handler *Handler) addToChat(c *gin.Context) {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrChatAlreadyExists):
-			newErrorResponse(c, http.StatusConflict, err.Error())
-
 		case errors.Is(err, service.ErrUserNotFound):
 			newErrorResponse(c, http.StatusNotFound, err.Error())
 
@@ -48,7 +43,6 @@ func (handler *Handler) addToChat(c *gin.Context) {
 			logrus.Error(err)
 			newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		}
-
 		return
 	}
 
@@ -62,8 +56,6 @@ func (handler *Handler) getChats(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("%w: %s", service.ErrInvalidUserID, err.Error()))
 		return
 	}
-
-	logrus.Info("Запрос от юзера с ID: ", userId)
 
 	chats, err := handler.services.Chat.GetChats(userId)
 

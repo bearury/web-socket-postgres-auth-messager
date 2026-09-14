@@ -80,3 +80,9 @@ func (s *AuthService) GetUserById(userId string) (entities.UserResponse, error) 
 	user, err := s.repo.GetUserById(userId)
 	return user, err
 }
+
+func (s *AuthService) GetAllUsersWithoutUser(userId string) ([]entities.UserResponse, error) {
+	users, err := s.repo.GetAllUsersWithoutUser(userId)
+
+	return users, err
+}

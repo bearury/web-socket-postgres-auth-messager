@@ -81,7 +81,7 @@ func (s *ChatService) AddChat(name string, chatType entities.ChatType, userId st
 				return entities.Chat{}, fmt.Errorf("error getting chat by userIds: %w", err)
 			}
 		}
-		return chat, ErrChatAlreadyExists
+		return chat, nil
 	case entities.ChatTypeGroup:
 		logger.Info("Croup")
 		return s.repo.AddChat(name, chatType)

@@ -5,6 +5,7 @@ import (
 	"web-socket-postgres-auth-messager/entities"
 	ws_hub "web-socket-postgres-auth-messager/handler/ws-hub"
 
+	"github.com/bytedance/gopkg/util/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -73,18 +74,32 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 
 		switch msg.Type {
 		case "message":
-			payload, ok := msg.Payload["content"]
+			content, ok := msg.Payload["content"]
 			if !ok {
 				continue
 			}
 
-			content, ok := payload.(string)
+			chatId, ok := msg.Payload["chat_id"]
+			if !ok {
+				continue
+			}
+
+			contentStr, ok := content.(string)
 			if !ok {
 				logrus.Error("Message content is not string")
 				continue
 			}
 
-			handler.sendAllMessage(client, content)
+			chatIdStr, ok := chatId.(string)
+			if !ok {
+				logrus.Error("Chat id is not string")
+				continue
+			}
+
+			logger.Info("CONTENT ☀", contentStr)
+			logger.Info("CHAT ☀", chatIdStr)
+
+			handler.sendAllMessage(client, contentStr)
 
 		case "ping":
 			timestamp, ok := msg.Payload["timestamp"]

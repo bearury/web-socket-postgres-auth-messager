@@ -10,6 +10,7 @@ type Authorization interface {
 	GenerateToken(username string, password string) (string, error)
 	ParseToken(token string) (string, error)
 	GetUserById(userId string) (entities.UserResponse, error)
+	GetAllUsersWithoutUser(userId string) ([]entities.UserResponse, error)
 }
 
 type Chat interface {

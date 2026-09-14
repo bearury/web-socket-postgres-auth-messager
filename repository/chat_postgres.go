@@ -18,7 +18,7 @@ func NewChatPostgres(db *sqlx.DB) *ChatPostgres {
 func (repo *ChatPostgres) GetChats(userId string) ([]entities.Chat, error) {
 	chats := make([]entities.Chat, 0)
 
-	query := fmt.Sprintf("SELECT c.* FROM chats c JOIN chat_users cu ON cu.chat_id=c.id WHERE cu.user_id=$1")
+	query := fmt.Sprintf("SELECT c.* FROM chats c JOIN chat_users cu ON cu.chat_id=c.id WHERE cu.user_id=$1 AND cu.deleted_at IS NULL AND EXISTS ( SELECT 1 FROM messages m WHERE m.chat_id = c.id)")
 
 	err := repo.db.Select(&chats, query, userId)
 
@@ -52,7 +52,7 @@ func (repo *ChatPostgres) AddChat(name string, chatType entities.ChatType) (enti
 func (repo *ChatPostgres) AddChatUser(chatId, userId string) (string, error) {
 	chat := entities.ChatUsers{}
 
-	query := fmt.Sprintf("INSERT INTO %s (chat_id, user_id) VALUES ($1, $2) RETURNING *", chatUsersTable)
+	query := fmt.Sprintf("INSERT INTO %s (chat_id, user_id, deleted_at) VALUES ($1, $2, null) RETURNING chat_id, user_id", chatUsersTable)
 
 	row := repo.db.QueryRow(query, chatId, userId)
 

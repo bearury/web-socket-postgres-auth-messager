@@ -8,7 +8,7 @@ type User struct {
 }
 
 type UserResponse struct {
-	Id       string `json:"-" db:"id"`
-	Name     string `json:"name"`
-	Username string `json:"username" binding:"required"`
+	Id       string `json:"id" db:"id" binding:"required"`
+	Name     string `json:"name" db:"name"`
+	Username string `json:"username" db:"username" binding:"required"`
 }

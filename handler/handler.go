@@ -36,6 +36,9 @@ func (handler *Handler) InitRoutes() *gin.Engine {
 		api.GET("/chat", handler.getChats)
 		api.POST("/chat", handler.addToChat)
 		api.DELETE("/chat", handler.removeChat)
+
+		api.GET("/users", handler.getUsers)
+		api.GET("/me", handler.getMe)
 	}
 
 	router.GET("/ws", handler.ws)
