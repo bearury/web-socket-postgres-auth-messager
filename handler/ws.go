@@ -14,7 +14,7 @@ import (
 func (handler *Handler) ws(c *gin.Context) {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			return true // Для разработки ок, для продакшена лучше ограничить домены
 		},
 	}
 
@@ -23,13 +23,22 @@ func (handler *Handler) ws(c *gin.Context) {
 		logrus.Error("Error connection websocket: ", err)
 		return
 	}
+	// Важно: гарантируем закрытие сокета при выходе из хэндлера,
+	// если мы не передали управление в read/write циклы
+	defer func(conn *websocket.Conn) {
+		err := conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
 
 	token := c.Query("token")
 
 	userID, err := handler.services.Authorization.ParseToken(token)
 	if err != nil {
 		logrus.Error("Error parsing token: ", err)
-		err := conn.Close()
+		// Вежливо говорим клиенту, что токен невалиден
+		err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "Unauthorized"))
 		if err != nil {
 			return
 		}
@@ -39,7 +48,7 @@ func (handler *Handler) ws(c *gin.Context) {
 	user, err := handler.services.GetUserById(userID)
 	if err != nil {
 		logrus.Error("Error get User by ID: ", err)
-		err := conn.Close()
+		err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "User not found"))
 		if err != nil {
 			return
 		}
@@ -48,31 +57,38 @@ func (handler *Handler) ws(c *gin.Context) {
 
 	client := &ws_hub.Client{
 		Conn: conn,
-		Send: make(chan entities.MessageResponse, 256),
+		Send: make(chan entities.WSMessageResponse, 256),
 		User: user,
 	}
 
+	// Регистрируем клиента в хабе
 	handler.hub.Register(client)
 
+	// Правильный порядок завершения:
+	// 1. Чтение (readFromClient) завершается (клиент ушел или ошибка).
+	// 2. Срабатывает defer: удаляем клиента из хаба.
+	// 3. Внутри Unregister ОБЯЗАТЕЛЬНО должен закрываться канал client.Send
+	//    ИЛИ само соединение conn, что послужит сигналом для выхода из WritePump.
 	defer func() {
 		handler.hub.Unregister(client)
+		logrus.Infof("Websocket connection closed for user %d: %s", user.Id, c.Request.RemoteAddr)
 	}()
 
+	// Запускаем запись в фоне
 	go client.WritePump()
 
+	// Сам хэндлер блокируется на чтении. Это главный цикл.
 	if err := handler.readFromClient(client); err != nil {
-		logrus.Error("Error reading from websocket: ", err)
+		// Не пишем в лог ошибку, если это обычное закрытие (1001 Going Away или 1000 Normal)
+		if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+			logrus.Error("Error reading from websocket: ", err)
+		}
 	}
-
-	logrus.Infof(
-		"Websocket connection closed: %s",
-		c.Request.RemoteAddr,
-	)
 }
 
 func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 	for {
-		msg := new(entities.Message)
+		msg := new(entities.WSMessage)
 
 		logger.Info("UserID: %s", client.User.Id)
 
@@ -86,8 +102,6 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 			if !ok {
 				continue
 			}
-
-			logger.Info("CONTENT !!!!!!!!!!!!", content)
 
 			chatId, ok := msg.Payload["chat_id"]
 			if !ok {
@@ -109,7 +123,13 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 			logger.Info("CONTENT ☀", contentStr)
 			logger.Info("CHAT ☀", chatIdStr)
 
-			handler.sendToChatMessage(chatIdStr, client, contentStr)
+			message, err := handler.services.Messages.AddMessage(client.User.Id, chatIdStr, contentStr)
+			if err != nil {
+				logrus.Error("Failed to create message in database: %s", err)
+				return err
+			}
+
+			handler.sendToChatMessage(message.ChatId, client, message.Content)
 
 		case "ping":
 			//timestamp, ok := msg.Payload["timestamp"]
@@ -136,11 +156,11 @@ func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
 	}
 
 	handler.hub.SendToUser(client.User.Id,
-		entities.MessageResponse{
+		entities.WSMessageResponse{
 			Type: "message",
-			Payload: entities.PayloadMessageResponse{
+			Payload: entities.WSPayloadMessageResponse{
 				From: name,
-				To: entities.PayloadToMessage{
+				To: entities.WSPayloadToMessage{
 					Type: entities.ChatTypeChat,
 					Id:   client.User.Id,
 				},
@@ -164,11 +184,11 @@ func (handler *Handler) sendToChatMessage(chatID string, client *ws_hub.Client, 
 	}
 
 	handler.hub.SendToChat(userIDs,
-		entities.MessageResponse{
+		entities.WSMessageResponse{
 			Type: "message",
-			Payload: entities.PayloadMessageResponse{
+			Payload: entities.WSPayloadMessageResponse{
 				From: client.User.Username,
-				To: entities.PayloadToMessage{
+				To: entities.WSPayloadToMessage{
 					Type: entities.ChatTypeChat,
 					Id:   chatID,
 				},

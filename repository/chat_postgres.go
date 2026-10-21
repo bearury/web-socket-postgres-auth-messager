@@ -18,7 +18,7 @@ func NewChatPostgres(db *sqlx.DB) *ChatPostgres {
 func (repo *ChatPostgres) GetChats(userId string) ([]entities.Chat, error) {
 	chats := make([]entities.Chat, 0)
 
-	query := fmt.Sprintf("SELECT c.* FROM chats c JOIN chat_users cu ON cu.chat_id=c.id WHERE cu.user_id=$1 AND cu.deleted_at IS NULL AND EXISTS ( SELECT 1 FROM messages m WHERE m.chat_id = c.id)")
+	query := fmt.Sprintf("SELECT c.* FROM chats c JOIN chat_users cu ON cu.chat_id = c.id WHERE cu.user_id = $1 AND cu.deleted_at IS NULL AND (c.creator = $1 OR EXISTS (SELECT 1 FROM messages m WHERE m.chat_id = c.id))")
 
 	err := repo.db.Select(&chats, query, userId)
 
@@ -45,12 +45,12 @@ func (repo *ChatPostgres) GetUsersChatByIdWithoutUser(chatId string, userId stri
 	return chats, err
 }
 
-func (repo *ChatPostgres) AddChat(name string, chatType entities.ChatType) (entities.Chat, error) {
+func (repo *ChatPostgres) AddChat(name string, chatType entities.ChatType, creator string) (entities.Chat, error) {
 	chat := entities.Chat{}
 
-	query := fmt.Sprintf("INSERT INTO chats (name, type) VALUES ($1, $2) RETURNING id, name, type")
+	query := fmt.Sprintf("INSERT INTO chats (name, type, creator) VALUES ($1, $2, $3) RETURNING id, name, type")
 
-	row := repo.db.QueryRow(query, name, chatType)
+	row := repo.db.QueryRow(query, name, chatType, creator)
 
 	if err := row.Scan(&chat.Id, &chat.Name, &chat.Type); err != nil {
 		return chat, err

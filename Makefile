@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 create_migrate:
 	migrate create -ext sql -dir ./schema -seq create_chats
 

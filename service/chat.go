@@ -58,7 +58,7 @@ func (s *ChatService) AddChat(name string, chatType entities.ChatType, userId st
 			if errors.Is(err, sql.ErrNoRows) {
 				// Чат НЕ найден
 				// создать новый чат
-				chat, err := s.repo.AddChat(name, chatType)
+				chat, err := s.repo.AddChat(name, chatType, userId)
 
 				if err != nil {
 					return entities.Chat{}, fmt.Errorf("failed to add chat: %w", err)
@@ -84,10 +84,10 @@ func (s *ChatService) AddChat(name string, chatType entities.ChatType, userId st
 		return chat, nil
 	case entities.ChatTypeGroup:
 		logger.Info("Croup")
-		return s.repo.AddChat(name, chatType)
+		return s.repo.AddChat(name, chatType, userId)
 	case entities.ChatTypeChain:
 		logger.Info("Chain")
-		return s.repo.AddChat(name, chatType)
+		return s.repo.AddChat(name, chatType, userId)
 	default:
 		return entities.Chat{}, fmt.Errorf("unknown chat type: %s", chatType)
 	}

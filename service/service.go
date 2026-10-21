@@ -19,14 +19,21 @@ type Chat interface {
 	GetUsersChatByIdWithoutUser(chatId string, userId string) ([]entities.ChatUsers, error)
 }
 
+type Messages interface {
+	GetMessages(chatId string) ([]entities.MessageResponse, error)
+	AddMessage(userId, chatId, content string) (entities.MessageResponse, error)
+}
+
 type Service struct {
 	Authorization
 	Chat
+	Messages
 }
 
 func NewService(repo *repository.Repository) *Service {
 	return &Service{
 		Authorization: NewAuthService(repo.AuthRepository),
 		Chat:          NewChatService(repo.ChatRepository, repo.AuthRepository),
+		Messages:      NewMessagesService(repo.MessagesRepository),
 	}
 }

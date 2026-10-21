@@ -1,24 +1,33 @@
 package entities
 
-type Message struct {
+type WSMessage struct {
 	Type    string                 `json:"type"`
 	Payload map[string]interface{} `json:"payload"`
 }
 
-type PayloadToMessage struct {
+type WSPayloadToMessage struct {
 	Type ChatType `json:"type"`
 	Id   string   `json:"id"`
 }
 
-type PayloadMessageResponse struct {
-	From    string           `json:"from"`
-	To      PayloadToMessage `json:"to"`
-	Content string           `json:"content"`
+type WSPayloadMessageResponse struct {
+	From    string             `json:"from"`
+	To      WSPayloadToMessage `json:"to"`
+	Content string             `json:"content"`
+}
+
+type WSMessageResponse struct {
+	Type    string                   `json:"type"`
+	Payload WSPayloadMessageResponse `json:"payload"`
 }
 
 type MessageResponse struct {
-	Type    string                 `json:"type"`
-	Payload PayloadMessageResponse `json:"payload"`
+	Id        string `json:"id" db:"id" binding:"required"`
+	ChatId    string `json:"chatId" db:"chat_id" binding:"required"`
+	UserId    string `json:"userId" db:"user_id" binding:"required"`
+	UserName  string `json:"userName" db:"user_name"`
+	Content   string `json:"content" db:"content" binding:"required"`
+	CreatedAt string `json:"createdAt" db:"created_at" binding:"required"`
 }
 
 //id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -33,13 +33,14 @@ func (handler *Handler) InitRoutes() *gin.Engine {
 
 	api := router.Group("/api", handler.userIdentity)
 	{
-		api.GET("/chat", handler.getChats)
-		api.POST("/chat", handler.addToChat)
-		api.DELETE("/chat", handler.removeChat)
+		api.GET("/chats", handler.getChats)
+		api.POST("/chats", handler.addToChat)
+		api.DELETE("/chats", handler.removeChat)
 
-		api.GET("/messages", handler.getChats)
-		api.POST("/messages", handler.addToChat)
-		api.DELETE("/messages", handler.removeChat)
+		api.GET("chats/:id/messages", handler.getMessages)
+		api.POST("/messages", handler.addMessage)
+		api.PATCH("/messages", handler.updateMessage)
+		api.DELETE("/messages", handler.removeMessage)
 
 		api.GET("/users", handler.getUsers)
 		api.GET("/me", handler.getMe)
