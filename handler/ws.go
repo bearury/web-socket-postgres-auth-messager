@@ -29,14 +29,20 @@ func (handler *Handler) ws(c *gin.Context) {
 	userID, err := handler.services.Authorization.ParseToken(token)
 	if err != nil {
 		logrus.Error("Error parsing token: ", err)
-		conn.Close()
+		err := conn.Close()
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	user, err := handler.services.GetUserById(userID)
 	if err != nil {
 		logrus.Error("Error get User by ID: ", err)
-		conn.Close()
+		err := conn.Close()
+		if err != nil {
+			return
+		}
 		return
 	}
 
@@ -68,6 +74,8 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 	for {
 		msg := new(entities.Message)
 
+		logger.Info("UserID: %s", client.User.Id)
+
 		if err := client.Conn.ReadJSON(msg); err != nil {
 			return err
 		}
@@ -78,6 +86,8 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 			if !ok {
 				continue
 			}
+
+			logger.Info("CONTENT !!!!!!!!!!!!", content)
 
 			chatId, ok := msg.Payload["chat_id"]
 			if !ok {
@@ -99,19 +109,19 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 			logger.Info("CONTENT ☀", contentStr)
 			logger.Info("CHAT ☀", chatIdStr)
 
-			handler.sendAllMessage(client, contentStr)
+			handler.sendToChatMessage(chatIdStr, client, contentStr)
 
 		case "ping":
-			timestamp, ok := msg.Payload["timestamp"]
-			if !ok {
-				continue
-			}
+			//timestamp, ok := msg.Payload["timestamp"]
+			//if !ok {
+			//	continue
+			//}
 
-			logrus.Infof(
-				"Ping from user %d: %v",
-				client.User,
-				timestamp,
-			)
+			//logrus.Infof(
+			//	"Ping from user %d: %v",
+			//	client.User,
+			//	timestamp,
+			//)
 		}
 	}
 }
@@ -125,12 +135,43 @@ func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
 		name = client.User.Username
 	}
 
-	handler.hub.BroadcastExcept(client,
+	handler.hub.SendToUser(client.User.Id,
 		entities.MessageResponse{
 			Type: "message",
 			Payload: entities.PayloadMessageResponse{
-				From:    name,
-				To:      "all",
+				From: name,
+				To: entities.PayloadToMessage{
+					Type: entities.ChatTypeChat,
+					Id:   client.User.Id,
+				},
+				Content: content,
+			},
+		})
+}
+
+func (handler *Handler) sendToChatMessage(chatID string, client *ws_hub.Client, content string) {
+
+	users, err := handler.services.Chat.GetUsersChatByIdWithoutUser(chatID, client.User.Id)
+
+	if err != nil {
+		logrus.Error("Error Get Chat_users By Id Without current User. Error:", err)
+	}
+
+	userIDs := make([]string, len(users))
+
+	for i, user := range users {
+		userIDs[i] = user.UserId
+	}
+
+	handler.hub.SendToChat(userIDs,
+		entities.MessageResponse{
+			Type: "message",
+			Payload: entities.PayloadMessageResponse{
+				From: client.User.Username,
+				To: entities.PayloadToMessage{
+					Type: entities.ChatTypeChat,
+					Id:   chatID,
+				},
 				Content: content,
 			},
 		})

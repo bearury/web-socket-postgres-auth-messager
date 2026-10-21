@@ -18,6 +18,7 @@ type ChatRepository interface {
 	AddChat(name string, chatType entities.ChatType) (entities.Chat, error)
 	GetChatByUsersIds(user1Id, user2Id string) (entities.Chat, error)
 	AddChatUser(chatId string, userId string) (string, error)
+	GetUsersChatByIdWithoutUser(chatId string, userId string) ([]entities.ChatUsers, error)
 }
 
 type Repository struct {

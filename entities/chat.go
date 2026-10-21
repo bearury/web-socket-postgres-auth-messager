@@ -17,7 +17,7 @@ type Chat struct {
 }
 
 type ChatUsers struct {
-	ChatId    string    `json:"chatId" db:"chat_id" binding:"required"`
-	UserId    string    `json:"userId" db:"user_id" binding:"required"`
-	DeletedAt time.Time `json:"deletedAt" db:"deleted_at" binding:"required"`
+	ChatId    string     `json:"chatId" db:"chat_id" binding:"required"`
+	UserId    string     `json:"userId" db:"user_id" binding:"required"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty" db:"deleted_at"`
 }

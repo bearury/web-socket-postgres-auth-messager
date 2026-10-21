@@ -5,10 +5,15 @@ type Message struct {
 	Payload map[string]interface{} `json:"payload"`
 }
 
+type PayloadToMessage struct {
+	Type ChatType `json:"type"`
+	Id   string   `json:"id"`
+}
+
 type PayloadMessageResponse struct {
-	From    string `json:"from"`
-	To      string `json:"to"`
-	Content string `json:"content"`
+	From    string           `json:"from"`
+	To      PayloadToMessage `json:"to"`
+	Content string           `json:"content"`
 }
 
 type MessageResponse struct {

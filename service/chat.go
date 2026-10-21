@@ -92,3 +92,7 @@ func (s *ChatService) AddChat(name string, chatType entities.ChatType, userId st
 		return entities.Chat{}, fmt.Errorf("unknown chat type: %s", chatType)
 	}
 }
+
+func (s *ChatService) GetUsersChatByIdWithoutUser(chatId string, userId string) ([]entities.ChatUsers, error) {
+	return s.repo.GetUsersChatByIdWithoutUser(chatId, userId)
+}

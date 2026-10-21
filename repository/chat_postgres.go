@@ -35,10 +35,20 @@ func (repo *ChatPostgres) GetChatByUsersIds(user1Id, user2Id string) (entities.C
 	return chat, err
 }
 
+func (repo *ChatPostgres) GetUsersChatByIdWithoutUser(chatId string, userId string) ([]entities.ChatUsers, error) {
+	chats := make([]entities.ChatUsers, 0)
+
+	query := fmt.Sprintf("SELECT cu.chat_id, cu.user_id, cu.deleted_at FROM chat_users cu WHERE cu.chat_id = $1 AND cu.user_id != $2")
+
+	err := repo.db.Select(&chats, query, chatId, userId)
+
+	return chats, err
+}
+
 func (repo *ChatPostgres) AddChat(name string, chatType entities.ChatType) (entities.Chat, error) {
 	chat := entities.Chat{}
 
-	query := fmt.Sprintf("INSERT INTO %s (name, type) VALUES ($1, $2) RETURNING id, name, type", chatsTable)
+	query := fmt.Sprintf("INSERT INTO chats (name, type) VALUES ($1, $2) RETURNING id, name, type")
 
 	row := repo.db.QueryRow(query, name, chatType)
 
@@ -52,7 +62,7 @@ func (repo *ChatPostgres) AddChat(name string, chatType entities.ChatType) (enti
 func (repo *ChatPostgres) AddChatUser(chatId, userId string) (string, error) {
 	chat := entities.ChatUsers{}
 
-	query := fmt.Sprintf("INSERT INTO %s (chat_id, user_id, deleted_at) VALUES ($1, $2, null) RETURNING chat_id, user_id", chatUsersTable)
+	query := fmt.Sprintf("INSERT INTO chat_users (chat_id, user_id, deleted_at) VALUES ($1, $2, null) RETURNING chat_id, user_id")
 
 	row := repo.db.QueryRow(query, chatId, userId)
 

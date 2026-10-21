@@ -37,6 +37,10 @@ func (handler *Handler) InitRoutes() *gin.Engine {
 		api.POST("/chat", handler.addToChat)
 		api.DELETE("/chat", handler.removeChat)
 
+		api.GET("/messages", handler.getChats)
+		api.POST("/messages", handler.addToChat)
+		api.DELETE("/messages", handler.removeChat)
+
 		api.GET("/users", handler.getUsers)
 		api.GET("/me", handler.getMe)
 	}

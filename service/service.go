@@ -16,6 +16,7 @@ type Authorization interface {
 type Chat interface {
 	GetChats(userId string) ([]entities.Chat, error)
 	AddChat(name string, chatType entities.ChatType, userId string, userIds []string) (entities.Chat, error)
+	GetUsersChatByIdWithoutUser(chatId string, userId string) ([]entities.ChatUsers, error)
 }
 
 type Service struct {

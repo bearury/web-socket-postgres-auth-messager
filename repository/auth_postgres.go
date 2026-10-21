@@ -18,7 +18,7 @@ func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 func (repo *AuthPostgres) GetUser(username, password string) (entities.User, error) {
 	var user entities.User
 
-	query := fmt.Sprintf("SELECT id FROM %s WHERE username=$1 AND password_hash = $2", usersTable)
+	query := fmt.Sprintf("SELECT id FROM users WHERE username=$1 AND password_hash = $2")
 
 	err := repo.db.Get(&user, query, username, password)
 
@@ -28,7 +28,7 @@ func (repo *AuthPostgres) GetUser(username, password string) (entities.User, err
 func (repo *AuthPostgres) CreateUser(user entities.User) (string, error) {
 	var id string
 
-	query := fmt.Sprintf("INSERT INTO %s (name, username, password_hash) VALUES ($1, $2, $3) RETURNING id", usersTable)
+	query := fmt.Sprintf("INSERT INTO users (name, username, password_hash) VALUES ($1, $2, $3) RETURNING id")
 
 	row := repo.db.QueryRow(query, user.Name, user.Username, user.Password)
 
@@ -42,7 +42,7 @@ func (repo *AuthPostgres) CreateUser(user entities.User) (string, error) {
 func (repo *AuthPostgres) GetUserById(userId string) (entities.UserResponse, error) {
 	var user entities.UserResponse
 
-	query := fmt.Sprintf("SELECT id, name, username FROM %s WHERE id = $1", usersTable)
+	query := fmt.Sprintf("SELECT id, name, username FROM users WHERE id = $1")
 
 	err := repo.db.Get(&user, query, userId)
 
@@ -52,7 +52,7 @@ func (repo *AuthPostgres) GetUserById(userId string) (entities.UserResponse, err
 func (repo *AuthPostgres) GetAllUsersWithoutUser(userId string) ([]entities.UserResponse, error) {
 	users := make([]entities.UserResponse, 0)
 
-	query := fmt.Sprintf("SELECT id, name, username FROM %s WHERE id != $1", usersTable)
+	query := fmt.Sprintf("SELECT id, name, username FROM users WHERE id IS DISTINCT FROM $1")
 
 	err := repo.db.Select(&users, query, userId)
 

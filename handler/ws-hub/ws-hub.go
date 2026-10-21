@@ -1,6 +1,7 @@
 package wshub
 
 import (
+	"slices"
 	"web-socket-postgres-auth-messager/entities"
 
 	"github.com/gorilla/websocket"
@@ -23,6 +24,11 @@ type SendToUserMessage struct {
 	Message entities.MessageResponse
 }
 
+type SendToChatMessage struct {
+	UserIDs []string
+	Message entities.MessageResponse
+}
+
 type Hub struct {
 	clients         map[*Client]bool
 	register        chan *Client
@@ -30,6 +36,7 @@ type Hub struct {
 	broadcast       chan entities.MessageResponse
 	broadcastExcept chan BroadcastExceptMessage
 	sendToUser      chan SendToUserMessage
+	sendToChat      chan SendToChatMessage
 }
 
 func NewHub() *Hub {
@@ -40,6 +47,7 @@ func NewHub() *Hub {
 		broadcast:       make(chan entities.MessageResponse),
 		broadcastExcept: make(chan BroadcastExceptMessage),
 		sendToUser:      make(chan SendToUserMessage),
+		sendToChat:      make(chan SendToChatMessage),
 	}
 }
 
@@ -94,6 +102,14 @@ func (h *Hub) Run() {
 					h.send(client, data.Message)
 				}
 			}
+
+		case data := <-h.sendToChat:
+			for client := range h.clients {
+				// Проверкак что пользователь содержется в массиве переданных ID пользователей
+				if slices.Contains(data.UserIDs, client.User.Id) {
+					h.send(client, data.Message)
+				}
+			}
 		}
 	}
 }
@@ -111,7 +127,12 @@ func (h *Hub) Broadcast(message entities.MessageResponse) {
 }
 
 func (client *Client) WritePump() {
-	defer client.Conn.Close()
+	defer func(Conn *websocket.Conn) {
+		err := Conn.Close()
+		if err != nil {
+
+		}
+	}(client.Conn)
 
 	for message := range client.Send {
 		if err := client.Conn.WriteJSON(message); err != nil {
@@ -148,6 +169,16 @@ func (h *Hub) SendToUser(
 ) {
 	h.sendToUser <- SendToUserMessage{
 		UserID:  userID,
+		Message: message,
+	}
+}
+
+func (h *Hub) SendToChat(
+	userIDs []string,
+	message entities.MessageResponse,
+) {
+	h.sendToChat <- SendToChatMessage{
+		UserIDs: userIDs,
 		Message: message,
 	}
 }
