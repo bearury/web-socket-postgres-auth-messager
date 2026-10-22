@@ -25,18 +25,18 @@ func (repo *AuthPostgres) GetUser(username, password string) (entities.User, err
 	return user, err
 }
 
-func (repo *AuthPostgres) CreateUser(user entities.User) (string, error) {
-	var id string
+func (repo *AuthPostgres) CreateUser(userDto entities.User) (entities.User, error) {
+	var user entities.User
 
-	query := fmt.Sprintf("INSERT INTO users (name, username, password_hash) VALUES ($1, $2, $3) RETURNING id")
+	query := fmt.Sprintf("INSERT INTO users (name, username, password_hash) VALUES ($1, $2, $3) RETURNING id, name, username")
 
-	row := repo.db.QueryRow(query, user.Name, user.Username, user.Password)
+	row := repo.db.QueryRow(query, userDto.Name, userDto.Username, userDto.Password)
 
-	if err := row.Scan(&id); err != nil {
-		return "", err
+	if err := row.Scan(&user.Id, &user.Name, &user.Username); err != nil {
+		return entities.User{}, err
 	}
 
-	return id, nil
+	return user, nil
 }
 
 func (repo *AuthPostgres) GetUserById(userId string) (entities.UserResponse, error) {

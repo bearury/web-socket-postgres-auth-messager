@@ -1,12 +1,13 @@
 package service
 
 import (
+	"context"
 	"web-socket-postgres-auth-messager/entities"
 	"web-socket-postgres-auth-messager/repository"
 )
 
 type Authorization interface {
-	CreateUser(user entities.User) (string, error)
+	CreateUser(user entities.User) (entities.User, error)
 	GenerateToken(username string, password string) (string, error)
 	ParseToken(token string) (string, error)
 	GetUserById(userId string) (entities.UserResponse, error)
@@ -20,8 +21,12 @@ type Chat interface {
 }
 
 type Messages interface {
-	GetMessages(chatId string) ([]entities.MessageResponse, error)
-	AddMessage(userId, chatId, content string) (entities.MessageResponse, error)
+	GetMessages(ctx context.Context, chatId, userId string) ([]entities.MessageResponseWithStatus, error)
+	AddMessage(user entities.UserResponse, chatId, content string) (entities.MessageResponse, error)
+}
+
+type NotificationHub interface {
+	SendToChat(userIDs []string, message entities.WSMessageResponse)
 }
 
 type Service struct {
@@ -30,10 +35,10 @@ type Service struct {
 	Messages
 }
 
-func NewService(repo *repository.Repository) *Service {
+func NewService(repo *repository.Repository, hub NotificationHub) *Service {
 	return &Service{
 		Authorization: NewAuthService(repo.AuthRepository),
 		Chat:          NewChatService(repo.ChatRepository, repo.AuthRepository),
-		Messages:      NewMessagesService(repo.MessagesRepository),
+		Messages:      NewMessagesService(repo.MessagesRepository, repo.ChatRepository, hub),
 	}
 }

@@ -29,7 +29,7 @@ type tokenClaims struct {
 	UserId string `json:"user_id"`
 }
 
-func (s *AuthService) CreateUser(user entities.User) (string, error) {
+func (s *AuthService) CreateUser(user entities.User) (entities.User, error) {
 	user.Password = s.generatePasswordHash(user.Password)
 	return s.repo.CreateUser(user)
 }

@@ -1,12 +1,22 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"web-socket-postgres-auth-messager/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 func (handler *Handler) getMessages(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		logrus.Error(err)
+		newErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("%w: %s", service.ErrInvalidUserID, err.Error()))
+		return
+	}
+
 	chatIDStr, err := getParam(c)
 
 	if err != nil {
@@ -14,7 +24,9 @@ func (handler *Handler) getMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := handler.services.Messages.GetMessages(chatIDStr)
+	ctx := c.Request.Context()
+
+	messages, err := handler.services.Messages.GetMessages(ctx, chatIDStr, userId)
 
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())

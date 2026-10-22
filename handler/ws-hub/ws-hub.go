@@ -182,3 +182,16 @@ func (h *Hub) SendToChat(
 		Message: message,
 	}
 }
+
+//	handler.hub.SendToChat(userIDs,
+//		entities.WSMessageResponse{
+//			Type: "message",
+//			Payload: entities.WSPayloadMessageResponse{
+//				From: user.Username,
+//				To: entities.WSPayloadToMessage{
+//					Type: entities.ChatTypeChat,
+//					Id:   chatId,
+//				},
+//				Content: content,
+//			},
+//		})

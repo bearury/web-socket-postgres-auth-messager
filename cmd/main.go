@@ -4,6 +4,7 @@ import (
 	"os"
 	web_socket_postgres_auth_messager "web-socket-postgres-auth-messager"
 	"web-socket-postgres-auth-messager/handler"
+	ws_hub "web-socket-postgres-auth-messager/handler/ws-hub"
 	"web-socket-postgres-auth-messager/repository"
 	"web-socket-postgres-auth-messager/service"
 
@@ -36,9 +37,12 @@ func main() {
 		logrus.Fatalf("init postgres db err: %v", err.Error())
 	}
 
+	hub := ws_hub.NewHub()
+	go hub.Run()
+
 	initRepo := repository.NewRepository(db)
-	initService := service.NewService(initRepo)
-	initHandler := handler.NewHandler(initService)
+	initService := service.NewService(initRepo, hub)
+	initHandler := handler.NewHandler(initService, hub)
 
 	srv := new(web_socket_postgres_auth_messager.Server)
 

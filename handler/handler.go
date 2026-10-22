@@ -12,11 +12,7 @@ type Handler struct {
 	hub      *ws_hub.Hub
 }
 
-func NewHandler(services *service.Service) *Handler {
-	hub := ws_hub.NewHub()
-
-	go hub.Run()
-
+func NewHandler(services *service.Service, hub *ws_hub.Hub) *Handler {
 	return &Handler{services: services, hub: hub}
 }
 

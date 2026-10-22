@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"web-socket-postgres-auth-messager/entities"
 
@@ -71,4 +72,56 @@ func (repo *ChatPostgres) AddChatUser(chatId, userId string) (string, error) {
 	}
 
 	return chat.ChatId, nil
+}
+
+func (repo *ChatPostgres) UpdateChatUserDelevered(ctx context.Context, chatId, userId string) (entities.ChatUsers, error) {
+	chatUsers := entities.ChatUsers{}
+
+	query := fmt.Sprintf(`
+		UPDATE chat_users 
+		SET 
+			last_delivered_at = now(),
+			deleted_at = null
+		WHERE chat_id = $1 AND user_id = $2
+		RETURNING chat_id, user_id, last_delivered_at, last_read_at, deleted_at;
+	`)
+
+	err := repo.db.QueryRowContext(ctx, query, chatId, userId).Scan(
+		&chatUsers.ChatId,
+		&chatUsers.UserId,
+		&chatUsers.LastDeleveredAt,
+		&chatUsers.LastReadAt,
+		&chatUsers.DeletedAt,
+	)
+	if err != nil {
+		return entities.ChatUsers{}, err
+	}
+
+	return chatUsers, nil
+}
+
+func (repo *ChatPostgres) UpdateChatUserRead(ctx context.Context, chatId, userId string) (entities.ChatUsers, error) {
+	chatUsers := entities.ChatUsers{}
+
+	query := fmt.Sprintf(`
+		UPDATE chat_users 
+		SET 
+			last_read_at = now(),
+			deleted_at = null
+		WHERE chat_id = $1 AND user_id = $2
+		RETURNING chat_id, user_id, last_delivered_at, last_read_at, deleted_at;
+	`)
+
+	err := repo.db.QueryRowContext(ctx, query, chatId, userId).Scan(
+		&chatUsers.ChatId,
+		&chatUsers.UserId,
+		&chatUsers.LastDeleveredAt,
+		&chatUsers.LastReadAt,
+		&chatUsers.DeletedAt,
+	)
+	if err != nil {
+		return entities.ChatUsers{}, err
+	}
+
+	return chatUsers, nil
 }

@@ -12,6 +12,7 @@ import (
 
 func (handler *Handler) signUp(c *gin.Context) {
 	var input entities.User
+	var token string
 
 	if err := c.BindJSON(&input); err != nil {
 		logrus.Errorf("Error binding JSON: %s", err)
@@ -19,12 +20,19 @@ func (handler *Handler) signUp(c *gin.Context) {
 		return
 	}
 
-	id, err := handler.services.Authorization.CreateUser(input)
+	user, err := handler.services.Authorization.CreateUser(input)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		newErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Error create User: %s", err.Error()))
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": id})
+	token, err = handler.services.Authorization.GenerateToken(user.Username, input.Password)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Error generate token: %s", user.Username, err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 type signInInput struct {

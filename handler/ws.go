@@ -98,38 +98,17 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 
 		switch msg.Type {
 		case "message":
-			content, ok := msg.Payload["content"]
-			if !ok {
-				continue
-			}
+			content := msg.Payload.Content
 
-			chatId, ok := msg.Payload["chat_id"]
-			if !ok {
-				continue
-			}
+			chatId := msg.Payload.To.Id
 
-			contentStr, ok := content.(string)
-			if !ok {
-				logrus.Error("Message content is not string")
-				continue
-			}
-
-			chatIdStr, ok := chatId.(string)
-			if !ok {
-				logrus.Error("Chat id is not string")
-				continue
-			}
-
-			logger.Info("CONTENT ☀", contentStr)
-			logger.Info("CHAT ☀", chatIdStr)
-
-			message, err := handler.services.Messages.AddMessage(client.User.Id, chatIdStr, contentStr)
+			_, err := handler.services.Messages.AddMessage(client.User, chatId, content)
 			if err != nil {
 				logrus.Error("Failed to create message in database: %s", err)
 				return err
 			}
 
-			handler.sendToChatMessage(message.ChatId, client, message.Content)
+			//handler.sendToChatMessage(message.ChatId, client, message.Content)
 
 		case "ping":
 			//timestamp, ok := msg.Payload["timestamp"]
@@ -169,30 +148,30 @@ func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
 		})
 }
 
-func (handler *Handler) sendToChatMessage(chatID string, client *ws_hub.Client, content string) {
-
-	users, err := handler.services.Chat.GetUsersChatByIdWithoutUser(chatID, client.User.Id)
-
-	if err != nil {
-		logrus.Error("Error Get Chat_users By Id Without current User. Error:", err)
-	}
-
-	userIDs := make([]string, len(users))
-
-	for i, user := range users {
-		userIDs[i] = user.UserId
-	}
-
-	handler.hub.SendToChat(userIDs,
-		entities.WSMessageResponse{
-			Type: "message",
-			Payload: entities.WSPayloadMessageResponse{
-				From: client.User.Username,
-				To: entities.WSPayloadToMessage{
-					Type: entities.ChatTypeChat,
-					Id:   chatID,
-				},
-				Content: content,
-			},
-		})
-}
+//func (handler *Handler) sendToChatMessage(chatId string, user entities.UserResponse, content string) {
+//
+//	users, err := handler.services.Chat.GetUsersChatByIdWithoutUser(chatId, user.Id)
+//
+//	if err != nil {
+//		logrus.Error("Error Get Chat_users By Id Without current User. Error:", err)
+//	}
+//
+//	userIDs := make([]string, len(users))
+//
+//	for i, user := range users {
+//		userIDs[i] = user.UserId
+//	}
+//
+//	handler.hub.SendToChat(userIDs,
+//		entities.WSMessageResponse{
+//			Type: "message",
+//			Payload: entities.WSPayloadMessageResponse{
+//				From: user.Username,
+//				To: entities.WSPayloadToMessage{
+//					Type: entities.ChatTypeChat,
+//					Id:   chatId,
+//				},
+//				Content: content,
+//			},
+//		})
+//}
