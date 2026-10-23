@@ -57,7 +57,7 @@ func (handler *Handler) ws(c *gin.Context) {
 
 	client := &ws_hub.Client{
 		Conn: conn,
-		Send: make(chan entities.WSMessageResponse, 256),
+		Send: make(chan entities.WSMessage, 256),
 		User: user,
 	}
 
@@ -97,20 +97,15 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 		}
 
 		switch msg.Type {
-		case "message":
-			content := msg.Payload.Content
-
-			chatId := msg.Payload.To.Id
-
-			_, err := handler.services.Messages.AddMessage(client.User, chatId, content)
+		case entities.WSTypeMessage:
+			err := handler.services.WebSocket.HandleMessage(client, msg)
 			if err != nil {
-				logrus.Error("Failed to create message in database: %s", err)
-				return err
+				logrus.Error("Error websocket handle message: ", err)
+				return nil
 			}
+		case entities.WSTypeNotify:
 
-			//handler.sendToChatMessage(message.ChatId, client, message.Content)
-
-		case "ping":
+		case entities.WSTypePing:
 			//timestamp, ok := msg.Payload["timestamp"]
 			//if !ok {
 			//	continue
@@ -125,51 +120,23 @@ func (handler *Handler) readFromClient(client *ws_hub.Client) error {
 	}
 }
 
-func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
-	name := "Anonimus"
-
-	if client.User.Name != "" {
-		name = client.User.Name
-	} else if client.User.Username != "" {
-		name = client.User.Username
-	}
-
-	handler.hub.SendToUser(client.User.Id,
-		entities.WSMessageResponse{
-			Type: "message",
-			Payload: entities.WSPayloadMessageResponse{
-				From: name,
-				To: entities.WSPayloadToMessage{
-					Type: entities.ChatTypeChat,
-					Id:   client.User.Id,
-				},
-				Content: content,
-			},
-		})
-}
-
-//func (handler *Handler) sendToChatMessage(chatId string, user entities.UserResponse, content string) {
+//func (handler *Handler) sendAllMessage(client *ws_hub.Client, content string) {
+//	name := "Anonimus"
 //
-//	users, err := handler.services.Chat.GetUsersChatByIdWithoutUser(chatId, user.Id)
-//
-//	if err != nil {
-//		logrus.Error("Error Get Chat_users By Id Without current User. Error:", err)
+//	if client.User.Name != "" {
+//		name = client.User.Name
+//	} else if client.User.Username != "" {
+//		name = client.User.Username
 //	}
 //
-//	userIDs := make([]string, len(users))
-//
-//	for i, user := range users {
-//		userIDs[i] = user.UserId
-//	}
-//
-//	handler.hub.SendToChat(userIDs,
-//		entities.WSMessageResponse{
+//	handler.hub.SendToUser(client.User.Id,
+//		entities.WSMessage{
 //			Type: "message",
-//			Payload: entities.WSPayloadMessageResponse{
-//				From: user.Username,
+//			Payload: {
+//				From: name,
 //				To: entities.WSPayloadToMessage{
 //					Type: entities.ChatTypeChat,
-//					Id:   chatId,
+//					Id:   client.User.Id,
 //				},
 //				Content: content,
 //			},

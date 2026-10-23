@@ -10,30 +10,30 @@ import (
 
 type Client struct {
 	Conn *websocket.Conn
-	Send chan entities.WSMessageResponse
+	Send chan entities.WSMessage
 	User entities.UserResponse
 }
 
 type BroadcastExceptMessage struct {
-	Message entities.WSMessageResponse
+	Message entities.WSMessage
 	Except  *Client
 }
 
 type SendToUserMessage struct {
 	UserID  string
-	Message entities.WSMessageResponse
+	Message entities.WSMessage
 }
 
 type SendToChatMessage struct {
 	UserIDs []string
-	Message entities.WSMessageResponse
+	Message entities.WSMessage
 }
 
 type Hub struct {
 	clients         map[*Client]bool
 	register        chan *Client
 	unregister      chan *Client
-	broadcast       chan entities.WSMessageResponse
+	broadcast       chan entities.WSMessage
 	broadcastExcept chan BroadcastExceptMessage
 	sendToUser      chan SendToUserMessage
 	sendToChat      chan SendToChatMessage
@@ -44,7 +44,7 @@ func NewHub() *Hub {
 		clients:         make(map[*Client]bool),
 		register:        make(chan *Client),
 		unregister:      make(chan *Client),
-		broadcast:       make(chan entities.WSMessageResponse),
+		broadcast:       make(chan entities.WSMessage),
 		broadcastExcept: make(chan BroadcastExceptMessage),
 		sendToUser:      make(chan SendToUserMessage),
 		sendToChat:      make(chan SendToChatMessage),
@@ -122,7 +122,7 @@ func (h *Hub) Unregister(client *Client) {
 	h.unregister <- client
 }
 
-func (h *Hub) Broadcast(message entities.WSMessageResponse) {
+func (h *Hub) Broadcast(message entities.WSMessage) {
 	h.broadcast <- message
 }
 
@@ -142,7 +142,7 @@ func (client *Client) WritePump() {
 	}
 }
 
-func (h *Hub) send(client *Client, message entities.WSMessageResponse) {
+func (h *Hub) send(client *Client, message entities.WSMessage) {
 	select {
 	case client.Send <- message:
 	default:
@@ -155,7 +155,7 @@ func (h *Hub) send(client *Client, message entities.WSMessageResponse) {
 
 func (h *Hub) BroadcastExcept(
 	client *Client,
-	message entities.WSMessageResponse,
+	message entities.WSMessage,
 ) {
 	h.broadcastExcept <- BroadcastExceptMessage{
 		Message: message,
@@ -165,7 +165,7 @@ func (h *Hub) BroadcastExcept(
 
 func (h *Hub) SendToUser(
 	userID string,
-	message entities.WSMessageResponse,
+	message entities.WSMessage,
 ) {
 	h.sendToUser <- SendToUserMessage{
 		UserID:  userID,
@@ -175,7 +175,7 @@ func (h *Hub) SendToUser(
 
 func (h *Hub) SendToChat(
 	userIDs []string,
-	message entities.WSMessageResponse,
+	message entities.WSMessage,
 ) {
 	h.sendToChat <- SendToChatMessage{
 		UserIDs: userIDs,

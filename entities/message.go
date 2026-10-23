@@ -1,24 +1,43 @@
 package entities
 
-type WSMessage struct {
-	Type    string                   `json:"type"`
-	Payload WSPayloadMessageResponse `json:"payload"`
-}
+import "encoding/json"
 
-type WSPayloadToMessage struct {
-	Type ChatType `json:"type"`
-	Id   string   `json:"id"`
+type WSType string
+
+const (
+	WSTypeMessage WSType = "message"
+	WSTypeNotify  WSType = "notify"
+	WSTypePing    WSType = "ping"
+)
+
+type WSNotifyType string
+
+const (
+	WSNotifyDelivery WSNotifyType = "notify_delivery"
+	WSNotifyRead     WSNotifyType = "notify_read"
+)
+
+type WSMessage struct {
+	Type    WSType          `json:"type"`
+	Payload json.RawMessage `json:"payload"`
 }
 
 type WSPayloadMessageResponse struct {
-	From    string             `json:"from"`
-	To      WSPayloadToMessage `json:"to"`
-	Content string             `json:"content"`
+	From    string `json:"from"`
+	Content string `json:"content"`
+	To      struct {
+		Id   string   `json:"id"`
+		Type ChatType `json:"type"`
+	} `json:"to"`
 }
 
-type WSMessageResponse struct {
-	Type    string                   `json:"type"`
-	Payload WSPayloadMessageResponse `json:"payload"`
+type WSPayloadNotifyResponse struct {
+	From string       `json:"from"`
+	Type WSNotifyType `json:"type"`
+	To   struct {
+		Id   string   `json:"id"`
+		Type ChatType `json:"type"`
+	} `json:"to"`
 }
 
 type MessageResponse struct {

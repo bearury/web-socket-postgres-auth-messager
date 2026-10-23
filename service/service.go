@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"web-socket-postgres-auth-messager/entities"
+	ws_hub "web-socket-postgres-auth-messager/handler/ws-hub"
 	"web-socket-postgres-auth-messager/repository"
 )
 
@@ -25,20 +26,31 @@ type Messages interface {
 	AddMessage(user entities.UserResponse, chatId, content string) (entities.MessageResponse, error)
 }
 
+type WebSocket interface {
+	HandleMessage(client *ws_hub.Client, msg *entities.WSMessage) error
+}
+
 type NotificationHub interface {
-	SendToChat(userIDs []string, message entities.WSMessageResponse)
+	SendToChat(userIDs []string, message entities.WSMessage)
 }
 
 type Service struct {
 	Authorization
 	Chat
 	Messages
+	WebSocket
 }
 
 func NewService(repo *repository.Repository, hub NotificationHub) *Service {
+	authSrv := NewAuthService(repo.AuthRepository)
+	chatSrv := NewChatService(repo.ChatRepository, repo.AuthRepository)
+	msgSrv := NewMessagesService(repo.MessagesRepository, repo.ChatRepository, hub)
+	wsSrv := NewWebsocketService(msgSrv, chatSrv, hub)
+
 	return &Service{
-		Authorization: NewAuthService(repo.AuthRepository),
-		Chat:          NewChatService(repo.ChatRepository, repo.AuthRepository),
-		Messages:      NewMessagesService(repo.MessagesRepository, repo.ChatRepository, hub),
+		Authorization: authSrv,
+		Chat:          chatSrv,
+		Messages:      msgSrv,
+		WebSocket:     wsSrv,
 	}
 }

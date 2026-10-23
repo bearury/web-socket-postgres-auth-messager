@@ -60,7 +60,7 @@ func (repo *MessagesPostgres) GetMessages(chatId string) ([]entities.MessageResp
 		LEFT JOIN chat_users cu ON cu.chat_id = m.chat_id AND cu.deleted_at IS NULL
 		WHERE m.chat_id = $1
 		GROUP BY m.id, m.chat_id, m.user_id, m.content, m.created_at
-		ORDER BY m.created_at DESC
+		ORDER BY m.created_at
 		LIMIT $2 OFFSET $3;
 	`)
 
